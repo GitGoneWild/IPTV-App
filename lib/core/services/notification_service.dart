@@ -24,11 +24,17 @@ class NotificationService {
     );
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
+    const windowsSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
 
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
       linux: linuxSettings,
+      windows: windowsSettings,
     );
 
     await _localNotifications.initialize(
