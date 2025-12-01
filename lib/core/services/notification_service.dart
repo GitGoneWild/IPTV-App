@@ -26,8 +26,11 @@ class NotificationService {
     );
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
+    // Windows requires appUserModelId for proper notification association
+    // Using reverse domain notation for app identification
     const windowsSettings = WindowsInitializationSettings(
       appName: AppStrings.appName,
+      appUserModelId: 'com.watchtheflix.app',
     );
 
     const initSettings = InitializationSettings(
