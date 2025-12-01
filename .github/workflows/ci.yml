@@ -18,7 +18,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -42,7 +42,7 @@ jobs:
     needs: analyze
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -69,7 +69,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -96,7 +96,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -117,7 +117,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Linux dependencies
         run: |
@@ -146,7 +146,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -170,7 +170,7 @@ jobs:
     needs: test
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup NuGet
         uses: nuget/setup-nuget@v2
