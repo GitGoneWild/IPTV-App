@@ -108,7 +108,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final page = _pages[index];
                   // Limit icon size for large screens to prevent overflow
-                  final iconSize = size.width * 0.4 > 200 ? 200.0 : size.width * 0.4;
+                  final iconSize = size.width * AppDimensions.onboardingIconWidthRatio > AppDimensions.onboardingIconMaxSize 
+                      ? AppDimensions.onboardingIconMaxSize 
+                      : size.width * AppDimensions.onboardingIconWidthRatio;
                   return SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -139,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             child: Icon(
                               page.icon,
-                              size: iconSize * 0.5,
+                              size: iconSize * AppDimensions.onboardingIconInnerRatio,
                               color: Colors.white,
                             ),
                           ),
