@@ -123,16 +123,13 @@ class ReminderService {
   /// Get reminder for a specific EPG event
   ReminderModel? getReminderForEvent(String channelId, DateTime startTime) {
     final reminders = getAllReminders();
-    try {
-      return reminders.firstWhere(
-        (r) =>
-            r.channelId == channelId &&
-            r.startTime.isAtSameMomentAs(startTime) &&
-            r.isActive,
-      );
-    } catch (e) {
-      return null;
-    }
+    final matches = reminders.where(
+      (r) =>
+          r.channelId == channelId &&
+          r.startTime.isAtSameMomentAs(startTime) &&
+          r.isActive,
+    );
+    return matches.isEmpty ? null : matches.first;
   }
 
   /// Clear all reminders
