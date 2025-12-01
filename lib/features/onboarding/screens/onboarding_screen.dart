@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -108,9 +110,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) {
                   final page = _pages[index];
                   // Limit icon size for large screens to prevent overflow
-                  final iconSize = size.width * AppDimensions.onboardingIconWidthRatio > AppDimensions.onboardingIconMaxSize 
-                      ? AppDimensions.onboardingIconMaxSize 
-                      : size.width * AppDimensions.onboardingIconWidthRatio;
+                  final iconSize = math.min(
+                    size.width * AppDimensions.onboardingIconWidthRatio,
+                    AppDimensions.onboardingIconMaxSize,
+                  );
                   return SingleChildScrollView(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
