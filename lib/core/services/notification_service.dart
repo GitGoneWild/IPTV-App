@@ -1,5 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../constants/app_strings.dart';
+
 /// Service for handling notifications
 /// Prepared for Firebase Cloud Messaging integration
 class NotificationService {
@@ -25,7 +27,7 @@ class NotificationService {
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
     const windowsSettings = WindowsInitializationSettings(
-      appName: 'WatchTheFlix',
+      appName: AppStrings.appName,
     );
 
     const initSettings = InitializationSettings(
