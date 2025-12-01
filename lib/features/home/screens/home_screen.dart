@@ -7,12 +7,15 @@ import '../../../core/config/app_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/services/reminder_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/widgets/custom_card.dart';
 import '../../../data/models/channel_model.dart';
 import '../../../data/models/movie_model.dart';
+import '../../../data/models/reminder_model.dart';
 import '../../../data/models/series_model.dart';
 
-/// Home screen with Continue Watching, Favorites, and recommendations
+/// Home screen with Continue Watching, Favorites, Reminders, and recommendations
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -28,12 +31,22 @@ class _HomeScreenState extends State<HomeScreen> {
   List<MovieModel> _favoriteMovies = [];
   List<SeriesModel> _favoriteSeries = [];
   List<MovieModel> _continueWatching = [];
+  List<ReminderModel> _upcomingReminders = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _initializeServices();
     _loadData();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      await ReminderService.instance.initialize();
+    } catch (e) {
+      debugPrint('Failed to initialize reminder service: $e');
+    }
   }
 
   Future<void> _loadData() async {
@@ -51,10 +64,19 @@ class _HomeScreenState extends State<HomeScreen> {
     // Get watch progress
     final watchProgress = storage.getWatchProgress();
 
+    // Get upcoming reminders
+    List<ReminderModel> reminders = [];
+    try {
+      reminders = ReminderService.instance.getUpcomingReminders();
+    } catch (e) {
+      debugPrint('Failed to load reminders: $e');
+    }
+
     setState(() {
       _channels = channels;
       _movies = movies;
       _series = series;
+      _upcomingReminders = reminders;
 
       _favoriteChannels =
           channels.where((c) => favChannelIds.contains(c.id)).toList();
@@ -75,6 +97,13 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
 
       _isLoading = false;
+    });
+  }
+
+  Future<void> _dismissReminder(ReminderModel reminder) async {
+    await ReminderService.instance.removeReminder(reminder.id);
+    setState(() {
+      _upcomingReminders.removeWhere((r) => r.id == reminder.id);
     });
   }
 
@@ -233,6 +262,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // Featured content (hero banner)
                   if (_movies.isNotEmpty) _buildHeroBanner(),
+
+                  // Upcoming Reminders
+                  if (_upcomingReminders.isNotEmpty) ...[
+                    const SizedBox(height: AppDimensions.spacingXXL),
+                    _buildSection(
+                      title: AppStrings.homeUpcomingReminders,
+                      icon: Icons.alarm,
+                      child: _buildRemindersRow(),
+                    ),
+                  ],
 
                   // Continue Watching
                   if (_continueWatching.isNotEmpty) ...[
@@ -460,6 +499,40 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: AppDimensions.spacingL),
           child,
         ],
+      );
+
+  Widget _buildRemindersRow() => SizedBox(
+        height: 130,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: _upcomingReminders.length,
+          itemBuilder: (context, index) {
+            final reminder = _upcomingReminders[index];
+            return ReminderCard(
+              channelName: reminder.channelName,
+              programTitle: reminder.programTitle,
+              timeUntil: reminder.formattedTimeUntilStart,
+              channelLogoUrl: reminder.channelLogoUrl,
+              startTime: reminder.formattedStartTime,
+              onTap: () {
+                // Find the channel and navigate to player
+                final channel = _channels.firstWhere(
+                  (c) => c.id == reminder.channelId,
+                  orElse: () => ChannelModel(id: '', name: ''),
+                );
+                if (channel.streamUrl != null) {
+                  _navigateToPlayer(
+                    url: channel.streamUrl!,
+                    title: channel.name,
+                    isLive: true,
+                    channelId: channel.id,
+                  );
+                }
+              },
+              onDismiss: () => _dismissReminder(reminder),
+            );
+          },
+        ),
       );
 
   Widget _buildContinueWatchingRow() => SizedBox(

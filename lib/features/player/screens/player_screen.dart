@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -9,7 +11,7 @@ import '../../../core/constants/app_dimensions.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../data/models/epg_model.dart';
 
-/// Video player screen with EPG overlay
+/// Video player screen with EPG overlay and improved error handling
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({
     required this.url,
@@ -36,15 +38,20 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends State<PlayerScreen> {
+class _PlayerScreenState extends State<PlayerScreen> with WidgetsBindingObserver {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
+  bool _isInitializing = false;
   bool _hasError = false;
   String? _errorMessage;
   bool _showControls = true;
   bool _showEpgOverlay = false;
+  bool _isBuffering = false;
   Timer? _hideControlsTimer;
   Timer? _progressSaveTimer;
+  Timer? _epgUpdateTimer;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   List<EpgModel> _epgData = [];
   EpgModel? _currentProgram;
@@ -53,17 +60,34 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializePlayer();
     _loadEpgData();
     _enterFullScreen();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause video when app goes to background
+    if (state == AppLifecycleState.paused) {
+      _controller?.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      // Optionally resume when coming back
+      if (_isInitialized && !_hasError) {
+        _controller?.play();
+      }
+    }
+  }
+
   void _enterFullScreen() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // Only force landscape on non-desktop platforms
+    if (!kIsWeb && !Platform.isWindows && !Platform.isMacOS && !Platform.isLinux) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
   }
 
   void _exitFullScreen() {
@@ -76,14 +100,54 @@ class _PlayerScreenState extends State<PlayerScreen> {
     ]);
   }
 
+  String _getUserFriendlyErrorMessage(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+    
+    if (errorString.contains('socket') || errorString.contains('network')) {
+      return 'Network error. Please check your internet connection.';
+    }
+    if (errorString.contains('404') || errorString.contains('not found')) {
+      return 'Stream not found. The channel may be temporarily unavailable.';
+    }
+    if (errorString.contains('403') || errorString.contains('forbidden')) {
+      return 'Access denied. Please check your subscription.';
+    }
+    if (errorString.contains('timeout')) {
+      return 'Connection timed out. Please try again.';
+    }
+    if (errorString.contains('format') || errorString.contains('codec')) {
+      return 'Video format not supported on this device.';
+    }
+    if (errorString.contains('unimplemented')) {
+      return 'Video playback is not available on this platform.';
+    }
+    
+    return 'Unable to play this stream. Please try another channel.';
+  }
+
   Future<void> _initializePlayer() async {
+    if (_isInitializing) return;
+    
+    setState(() {
+      _isInitializing = true;
+      _hasError = false;
+      _errorMessage = null;
+    });
+
     try {
+      // Dispose previous controller if exists
+      await _controller?.dispose();
+      
       _controller = VideoPlayerController.networkUrl(
         Uri.parse(widget.url),
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: false,
+          allowBackgroundPlayback: false,
         ),
       );
+
+      // Add error listener before initialization
+      _controller!.addListener(_onPlayerStateChanged);
 
       await _controller!.initialize();
 
@@ -102,8 +166,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
       await _controller!.play();
 
-      _controller!.addListener(_onPlayerUpdate);
-
       // Start progress save timer
       _progressSaveTimer = Timer.periodic(
         const Duration(seconds: 10),
@@ -112,14 +174,49 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
       setState(() {
         _isInitialized = true;
+        _isInitializing = false;
         _hasError = false;
+        _retryCount = 0;
       });
 
       _startHideControlsTimer();
     } catch (e) {
+      debugPrint('Player initialization error: $e');
+      
+      // Try to retry automatically for transient errors
+      if (_retryCount < _maxRetries) {
+        _retryCount++;
+        debugPrint('Retrying... attempt $_retryCount of $_maxRetries');
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          _isInitializing = false;
+          await _initializePlayer();
+        }
+      } else {
+        setState(() {
+          _hasError = true;
+          _isInitializing = false;
+          _errorMessage = _getUserFriendlyErrorMessage(e);
+        });
+      }
+    }
+  }
+
+  void _onPlayerStateChanged() {
+    if (!mounted || _controller == null) return;
+    
+    final value = _controller!.value;
+    
+    // Check for buffering state
+    if (value.isBuffering != _isBuffering) {
+      setState(() => _isBuffering = value.isBuffering);
+    }
+    
+    // Check for errors
+    if (value.hasError) {
       setState(() {
         _hasError = true;
-        _errorMessage = e.toString();
+        _errorMessage = _getUserFriendlyErrorMessage(value.errorDescription ?? 'Unknown error');
       });
     }
   }
@@ -132,7 +229,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _updateCurrentProgram();
 
     // Update EPG every minute
-    Timer.periodic(const Duration(minutes: 1), (_) {
+    _epgUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       _updateCurrentProgram();
     });
   }
@@ -212,10 +309,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _saveProgress();
     _hideControlsTimer?.cancel();
     _progressSaveTimer?.cancel();
-    _controller?.removeListener(_onPlayerUpdate);
+    _epgUpdateTimer?.cancel();
+    _controller?.removeListener(_onPlayerStateChanged);
     _controller?.dispose();
     _exitFullScreen();
     super.dispose();
@@ -232,17 +331,38 @@ class _PlayerScreenState extends State<PlayerScreen> {
               // Video player
               _buildVideoPlayer(),
 
-              // Controls overlay
-              if (_showControls) _buildControlsOverlay(),
+              // Buffering indicator
+              if (_isBuffering && _isInitialized)
+                const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                  ),
+                ),
+
+              // Controls overlay (always show on desktop to avoid overlay play button)
+              if (_showControls || _isDesktop) _buildControlsOverlay(),
 
               // EPG overlay
               if (_showEpgOverlay && widget.isLive) _buildEpgOverlay(),
 
               // Loading indicator
-              if (!_isInitialized && !_hasError)
+              if (_isInitializing && !_hasError)
                 const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Loading stream...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -252,6 +372,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
         ),
       );
+
+  /// Check if running on desktop platform
+  bool get _isDesktop {
+    if (kIsWeb) return false;
+    return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+  }
 
   Widget _buildVideoPlayer() {
     if (_controller == null || !_isInitialized) {

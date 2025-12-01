@@ -45,6 +45,7 @@ abstract class AppStrings {
   static const String homeRecentlyAdded = 'Recently Added';
   static const String homePopular = 'Popular';
   static const String homeRecommended = 'Recommended for You';
+  static const String homeUpcomingReminders = 'Upcoming Reminders';
 
   // Live TV
   static const String liveTVAllChannels = 'All Channels';

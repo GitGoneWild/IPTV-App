@@ -6,6 +6,7 @@ import '../../../core/config/app_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/services/reminder_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/channel_model.dart';
@@ -120,6 +121,143 @@ class _LiveTVScreenState extends State<LiveTVScreen>
       await storage.addFavorite('channel', channel.id);
     }
     setState(() {});
+  }
+
+  Future<void> _showEpgAndSetReminder(ChannelModel channel) async {
+    final epg = _epgByChannel[channel.epgId ?? channel.id] ?? [];
+    // Filter to show only upcoming programs
+    final upcomingEpg = epg.where((e) => !e.hasEnded).toList();
+
+    if (upcomingEpg.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No EPG data available for this channel'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.backgroundSecondary,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Column(
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Program Guide - ${channel.name}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: AppColors.border),
+            // EPG list
+            Expanded(
+              child: ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: upcomingEpg.length,
+                itemBuilder: (context, index) {
+                  final program = upcomingEpg[index];
+                  final hasReminder = ReminderService.instance.hasReminder(
+                    channel.id,
+                    program.startTime,
+                  );
+
+                  return _EpgProgramTile(
+                    program: program,
+                    hasReminder: hasReminder,
+                    onSetReminder: program.isCurrentlyAiring
+                        ? null
+                        : () => _setReminder(channel, program),
+                    onRemoveReminder: hasReminder
+                        ? () => _removeReminder(channel, program)
+                        : null,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _setReminder(ChannelModel channel, EpgModel program) async {
+    try {
+      await ReminderService.instance.addReminder(
+        channelId: channel.id,
+        channelName: channel.name,
+        epgEvent: program,
+        channelLogoUrl: channel.logoUrl,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reminder set for "${program.title}"'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to set reminder: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _removeReminder(ChannelModel channel, EpgModel program) async {
+    final reminder = ReminderService.instance.getReminderForEvent(
+      channel.id,
+      program.startTime,
+    );
+    if (reminder != null) {
+      await ReminderService.instance.removeReminder(reminder.id);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reminder removed'),
+        ),
+      );
+      setState(() {});
+    }
   }
 
   @override
@@ -284,6 +422,7 @@ class _LiveTVScreenState extends State<LiveTVScreen>
           isFavorite: StorageService.instance.isFavorite('channel', channel.id),
           onTap: () => _navigateToPlayer(channel),
           onFavorite: () => _toggleFavorite(channel),
+          onShowEpg: () => _showEpgAndSetReminder(channel),
         );
       },
     );
@@ -298,6 +437,7 @@ class _ChannelListTile extends StatelessWidget {
     required this.isFavorite,
     required this.onTap,
     required this.onFavorite,
+    required this.onShowEpg,
   });
 
   final ChannelModel channel;
@@ -306,6 +446,7 @@ class _ChannelListTile extends StatelessWidget {
   final bool isFavorite;
   final VoidCallback onTap;
   final VoidCallback onFavorite;
+  final VoidCallback onShowEpg;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -440,11 +581,158 @@ class _ChannelListTile extends StatelessWidget {
                   ),
                   onPressed: onFavorite,
                 ),
+                // EPG/Reminder button
+                IconButton(
+                  icon: const Icon(Icons.schedule),
+                  color: AppColors.textSecondary,
+                  onPressed: onShowEpg,
+                  tooltip: 'Program Guide & Reminders',
+                ),
               ],
             ),
           ),
         ),
       );
+}
+
+/// EPG program tile for the bottom sheet
+class _EpgProgramTile extends StatelessWidget {
+  const _EpgProgramTile({
+    required this.program,
+    required this.hasReminder,
+    this.onSetReminder,
+    this.onRemoveReminder,
+  });
+
+  final EpgModel program;
+  final bool hasReminder;
+  final VoidCallback? onSetReminder;
+  final VoidCallback? onRemoveReminder;
+
+  @override
+  Widget build(BuildContext context) {
+    final isAiring = program.isCurrentlyAiring;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isAiring
+            ? AppColors.primary.withValues(alpha: 0.1)
+            : AppColors.backgroundTertiary,
+        borderRadius: BorderRadius.circular(12),
+        border: isAiring ? Border.all(color: AppColors.primary) : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Time column
+          SizedBox(
+            width: 60,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${program.startTime.hour.toString().padLeft(2, '0')}:${program.startTime.minute.toString().padLeft(2, '0')}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isAiring ? AppColors.primary : AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                Text(
+                  '${program.durationMinutes}m',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(width: 12),
+          
+          // Program info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (isAiring)
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'NOW',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                    Expanded(
+                      child: Text(
+                        program.title,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (program.description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    program.description!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                if (isAiring) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: program.progress,
+                      backgroundColor: AppColors.backgroundSecondary,
+                      color: AppColors.primary,
+                      minHeight: 3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          
+          // Reminder button
+          if (!isAiring) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              icon: Icon(
+                hasReminder ? Icons.alarm_on : Icons.alarm_add,
+                color: hasReminder ? AppColors.primary : AppColors.textSecondary,
+              ),
+              onPressed: hasReminder ? onRemoveReminder : onSetReminder,
+              tooltip: hasReminder ? 'Remove reminder' : 'Set reminder',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 class _ChannelSearchDelegate extends SearchDelegate<ChannelModel?> {
