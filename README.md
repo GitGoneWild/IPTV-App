@@ -66,6 +66,15 @@
 - Android Studio / Xcode (for mobile development)
 - Visual Studio / Build Tools (for Windows development)
 
+#### Windows Development Setup
+For Windows development, ensure you have:
+1. **Visual Studio 2022** (Community Edition or higher) with the "Desktop development with C++" workload
+2. **NuGet CLI** - Required for some Flutter plugins (e.g., `flutter_inappwebview_windows`)
+   - Download from [nuget.org/downloads](https://www.nuget.org/downloads)
+   - Place `nuget.exe` in a folder (e.g., `C:\Tools\NuGet`)
+   - Add the folder to your system PATH
+   - Verify installation: `nuget -v`
+
 ### Installation
 
 1. **Clone the repository**
