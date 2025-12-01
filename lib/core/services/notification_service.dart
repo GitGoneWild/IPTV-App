@@ -24,11 +24,13 @@ class NotificationService {
     );
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
+    const windowsSettings = WindowsInitializationSettings();
 
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
       linux: linuxSettings,
+      windows: windowsSettings,
     );
 
     await _localNotifications.initialize(
@@ -89,9 +91,12 @@ class NotificationService {
       presentSound: true,
     );
 
+    const windowsDetails = WindowsNotificationDetails();
+
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
+      windows: windowsDetails,
     );
 
     await _localNotifications.show(
@@ -126,9 +131,12 @@ class NotificationService {
       presentSound: true,
     );
 
+    const windowsDetails = WindowsNotificationDetails();
+
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
+      windows: windowsDetails,
     );
 
     // Using zonedSchedule for proper timezone handling
