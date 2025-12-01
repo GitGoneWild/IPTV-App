@@ -15,15 +15,28 @@ import 'metadata_provider.dart';
 class OmdbProvider implements MetadataProvider {
   OmdbProvider({
     HttpService? httpService,
-    this.apiKey,
-  }) : _http = httpService ?? HttpService();
+    String? apiKey,
+  }) : _http = httpService ?? HttpService(),
+       _apiKey = _validateApiKey(apiKey);
 
   final HttpService _http;
-  final String? apiKey;
+  final String? _apiKey;
 
   static const _baseUrl = 'https://www.omdbapi.com';
+  
+  /// Validate API key format (alphanumeric, 8 characters)
+  /// Returns null if invalid, otherwise returns the trimmed key
+  static String? _validateApiKey(String? key) {
+    if (key == null || key.isEmpty) return null;
+    final trimmed = key.trim();
+    // OMDb API keys are typically 8 alphanumeric characters
+    if (trimmed.length < 8 || !RegExp(r'^[a-zA-Z0-9]+$').hasMatch(trimmed)) {
+      return null;
+    }
+    return trimmed;
+  }
 
-  bool get _hasApiKey => apiKey != null && apiKey!.isNotEmpty;
+  bool get _hasApiKey => _apiKey != null;
 
   @override
   Future<MovieMetadata?> getMovieMetadata(String title, {int? year}) async {
@@ -31,7 +44,7 @@ class OmdbProvider implements MetadataProvider {
 
     try {
       final params = <String, String>{
-        'apikey': apiKey!,
+        'apikey': _apiKey!,
         't': title,
         'type': 'movie',
       };
@@ -69,7 +82,7 @@ class OmdbProvider implements MetadataProvider {
       final response = await _http.get(
         _baseUrl,
         queryParameters: {
-          'apikey': apiKey!,
+          'apikey': _apiKey!,
           't': title,
           'type': 'series',
         },
@@ -102,7 +115,7 @@ class OmdbProvider implements MetadataProvider {
       final response = await _http.get(
         _baseUrl,
         queryParameters: {
-          'apikey': apiKey!,
+          'apikey': _apiKey!,
           's': query,
           'type': 'movie',
         },
@@ -135,7 +148,7 @@ class OmdbProvider implements MetadataProvider {
       final response = await _http.get(
         _baseUrl,
         queryParameters: {
-          'apikey': apiKey!,
+          'apikey': _apiKey!,
           's': query,
           'type': 'series',
         },

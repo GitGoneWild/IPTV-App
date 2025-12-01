@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:xml/xml.dart' as xml;
+
 import '../../data/models/category_model.dart';
 import '../../data/models/channel_model.dart';
 import '../../data/models/epg_model.dart';
@@ -347,50 +349,62 @@ class XtreamService {
     }
   }
 
-  /// Parse XMLTV EPG format
+  /// Parse XMLTV EPG format using proper XML parsing
   List<EpgModel> _parseXmlTvEpg(String content) {
     final epg = <EpgModel>[];
-    // Basic XMLTV parsing - in a real app, use xml package for proper parsing
-    // This is a simplified implementation
-
-    final programRegex = RegExp(
-      r'<programme start="([^"]+)" stop="([^"]+)" channel="([^"]+)"[^>]*>',
-    );
-    final titleRegex = RegExp(r'<title[^>]*>([^<]+)</title>');
-    final descRegex = RegExp(r'<desc[^>]*>([^<]+)</desc>');
-
-    final matches = programRegex.allMatches(content);
-
-    for (final match in matches) {
-      final start = _parseXmlTvDate(match.group(1)!);
-      final stop = _parseXmlTvDate(match.group(2)!);
-      final channelId = match.group(3)!;
-
-      // Find the content between this programme tag and the next
-      final startIndex = match.end;
-      final endIndex = content.indexOf('</programme>', startIndex);
-      if (endIndex == -1) continue;
-
-      final programContent = content.substring(startIndex, endIndex);
-
-      final titleMatch = titleRegex.firstMatch(programContent);
-      final descMatch = descRegex.firstMatch(programContent);
-
-      if (titleMatch != null && start != null && stop != null) {
+    
+    try {
+      final document = xml.XmlDocument.parse(content);
+      final programmes = document.findAllElements('programme');
+      
+      for (final programme in programmes) {
+        final start = programme.getAttribute('start');
+        final stop = programme.getAttribute('stop');
+        final channelId = programme.getAttribute('channel');
+        
+        if (start == null || stop == null || channelId == null) continue;
+        
+        final startTime = _parseXmlTvDate(start);
+        final endTime = _parseXmlTvDate(stop);
+        
+        if (startTime == null || endTime == null) continue;
+        
+        // Get title element
+        final titleElement = programme.findElements('title').firstOrNull;
+        if (titleElement == null) continue;
+        
+        final title = titleElement.innerText;
+        
+        // Get optional description
+        final descElement = programme.findElements('desc').firstOrNull;
+        final description = descElement?.innerText;
+        
+        // Get optional category
+        final categoryElement = programme.findElements('category').firstOrNull;
+        final category = categoryElement?.innerText;
+        
+        // Get optional icon
+        final iconElement = programme.findElements('icon').firstOrNull;
+        final iconUrl = iconElement?.getAttribute('src');
+        
         epg.add(
           EpgModel(
-            id: '${channelId}_${start.millisecondsSinceEpoch}',
+            id: '${channelId}_${startTime.millisecondsSinceEpoch}',
             channelId: channelId,
-            title: _decodeHtmlEntities(titleMatch.group(1)!),
-            startTime: start,
-            endTime: stop,
-            description:
-                descMatch != null ? _decodeHtmlEntities(descMatch.group(1)!) : null,
+            title: title,
+            startTime: startTime,
+            endTime: endTime,
+            description: description,
+            category: category,
+            iconUrl: iconUrl,
           ),
         );
       }
+    } catch (e) {
+      // If XML parsing fails, return empty list
+      return [];
     }
-
+    
     return epg;
   }
 
@@ -410,13 +424,6 @@ class XtreamService {
       return null;
     }
   }
-
-  String _decodeHtmlEntities(String text) => text
-      .replaceAll('&amp;', '&')
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
-      .replaceAll('&quot;', '"')
-      .replaceAll('&#39;', "'");
 }
 
 /// Xtream authentication result
