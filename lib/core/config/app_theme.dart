@@ -84,7 +84,7 @@ class AppTheme {
       );
 
   // Card Theme
-  static CardTheme get _cardTheme => CardTheme(
+  static CardThemeData get _cardTheme => CardThemeData(
         color: AppColors.cardBackground,
         elevation: AppDimensions.cardElevation,
         shape: RoundedRectangleBorder(
@@ -284,7 +284,7 @@ class AppTheme {
       );
 
   // Dialog Theme
-  static DialogTheme get _dialogTheme => DialogTheme(
+  static DialogThemeData get _dialogTheme => DialogThemeData(
         backgroundColor: AppColors.backgroundSecondary,
         elevation: 8,
         shape: RoundedRectangleBorder(
@@ -327,7 +327,7 @@ class AppTheme {
       );
 
   // Tab Bar Theme
-  static TabBarTheme get _tabBarTheme => TabBarTheme(
+  static TabBarThemeData get _tabBarTheme => TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
         labelStyle: AppTextStyles.labelLarge,
