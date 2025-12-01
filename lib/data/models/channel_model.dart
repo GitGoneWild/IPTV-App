@@ -87,7 +87,7 @@ class ChannelModel extends Equatable {
         logoUrl: json['stream_icon']?.toString(),
         group: json['category_id']?.toString(),
         epgId: json['epg_channel_id']?.toString(),
-        catchupDays: json['tv_archive_duration'] as int?,
+        catchupDays: int.tryParse(json['tv_archive_duration']?.toString() ?? ''),
       );
 
   Map<String, dynamic> toJson() => {

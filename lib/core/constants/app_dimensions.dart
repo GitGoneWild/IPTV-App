@@ -103,4 +103,9 @@ abstract class AppDimensions {
   static const int animationFast = 150;
   static const int animationMedium = 300;
   static const int animationSlow = 500;
+
+  // Onboarding dimensions
+  static const double onboardingIconMaxSize = 200.0;
+  static const double onboardingIconWidthRatio = 0.4;
+  static const double onboardingIconInnerRatio = 0.5;
 }

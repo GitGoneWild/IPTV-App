@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -107,61 +109,69 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: _pages.length,
                 itemBuilder: (context, index) {
                   final page = _pages[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingXXXL,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Icon with gradient background
-                        Container(
-                          width: size.width * 0.4,
-                          height: size.width * 0.4,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: page.gradient,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                  // Limit icon size for large screens to prevent overflow
+                  final iconSize = math.min(
+                    size.width * AppDimensions.onboardingIconWidthRatio,
+                    AppDimensions.onboardingIconMaxSize,
+                  );
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingXXXL,
+                        vertical: AppDimensions.paddingL,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Icon with gradient background
+                          Container(
+                            width: iconSize,
+                            height: iconSize,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: page.gradient,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: page.gradient.first.withValues(alpha: 0.4),
+                                  blurRadius: 32,
+                                  spreadRadius: 8,
+                                ),
+                              ],
                             ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: page.gradient.first.withValues(alpha: 0.4),
-                                blurRadius: 32,
-                                spreadRadius: 8,
-                              ),
-                            ],
+                            child: Icon(
+                              page.icon,
+                              size: iconSize * AppDimensions.onboardingIconInnerRatio,
+                              color: Colors.white,
+                            ),
                           ),
-                          child: Icon(
-                            page.icon,
-                            size: size.width * 0.2,
-                            color: Colors.white,
+                          const SizedBox(height: 48),
+
+                          // Title
+                          Text(
+                            page.title,
+                            style:
+                                Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 48),
+                          const SizedBox(height: 16),
 
-                        // Title
-                        Text(
-                          page.title,
-                          style:
-                              Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Description
-                        Text(
-                          page.description,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          // Description
+                          Text(
+                            page.description,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

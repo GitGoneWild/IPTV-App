@@ -32,6 +32,55 @@ void main() {
       expect(channel.order, equals(1));
     });
 
+    test('should create from Xtream with int tv_archive_duration', () {
+      final json = {
+        'stream_id': 123,
+        'name': 'Test Channel',
+        'stream_icon': 'http://icon.test.com',
+        'category_id': 1,
+        'epg_channel_id': 'test.epg',
+        'tv_archive_duration': 7,
+      };
+
+      final channel = ChannelModel.fromXtream(json, 'http://server.com/live/user/pass');
+
+      expect(channel.id, equals('123'));
+      expect(channel.name, equals('Test Channel'));
+      expect(channel.logoUrl, equals('http://icon.test.com'));
+      expect(channel.group, equals('1'));
+      expect(channel.epgId, equals('test.epg'));
+      expect(channel.catchupDays, equals(7));
+    });
+
+    test('should create from Xtream with String tv_archive_duration', () {
+      final json = {
+        'stream_id': 123,
+        'name': 'Test Channel',
+        'stream_icon': 'http://icon.test.com',
+        'category_id': 1,
+        'epg_channel_id': 'test.epg',
+        'tv_archive_duration': '7',
+      };
+
+      final channel = ChannelModel.fromXtream(json, 'http://server.com/live/user/pass');
+
+      expect(channel.id, equals('123'));
+      expect(channel.name, equals('Test Channel'));
+      expect(channel.catchupDays, equals(7));
+    });
+
+    test('should create from Xtream with null tv_archive_duration', () {
+      final json = {
+        'stream_id': 123,
+        'name': 'Test Channel',
+        'tv_archive_duration': null,
+      };
+
+      final channel = ChannelModel.fromXtream(json, 'http://server.com/live/user/pass');
+
+      expect(channel.catchupDays, isNull);
+    });
+
     test('should convert to JSON', () {
       const channel = ChannelModel(
         id: 'ch1',
