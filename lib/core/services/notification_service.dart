@@ -24,11 +24,7 @@ class NotificationService {
     );
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
-    const windowsSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    const windowsSettings = WindowsInitializationSettings();
 
     const initSettings = InitializationSettings(
       android: androidSettings,
@@ -95,11 +91,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const windowsDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    const windowsDetails = WindowsNotificationDetails();
 
     const details = NotificationDetails(
       android: androidDetails,
@@ -139,11 +131,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const windowsDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    const windowsDetails = WindowsNotificationDetails();
 
     const details = NotificationDetails(
       android: androidDetails,
