@@ -95,9 +95,16 @@ class NotificationService {
       presentSound: true,
     );
 
+    const windowsDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
+      windows: windowsDetails,
     );
 
     await _localNotifications.show(
@@ -132,9 +139,16 @@ class NotificationService {
       presentSound: true,
     );
 
+    const windowsDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
+      windows: windowsDetails,
     );
 
     // Using zonedSchedule for proper timezone handling
