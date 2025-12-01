@@ -1,4 +1,4 @@
-package com.example.watchtheflix
+package tv.watchtheflix.app
 
 import io.flutter.embedding.android.FlutterActivity
 
