@@ -24,7 +24,9 @@ class NotificationService {
     );
     const linuxSettings =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
-    const windowsSettings = WindowsInitializationSettings();
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'WatchTheFlix',
+    );
 
     const initSettings = InitializationSettings(
       android: androidSettings,
