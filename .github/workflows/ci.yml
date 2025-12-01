@@ -6,10 +6,16 @@ on:
   pull_request:
     branches: [ main, master, develop ]
 
+# Set minimal permissions for all jobs
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

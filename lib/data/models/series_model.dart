@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'series_model.g.dart';
 
 /// Represents a TV series
-@HiveType(typeId: 2)
 class SeriesModel extends Equatable {
   const SeriesModel({
     required this.id,
@@ -25,52 +21,21 @@ class SeriesModel extends Equatable {
     this.metadata,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String title;
-
-  @HiveField(2)
   final String? posterUrl;
-
-  @HiveField(3)
   final String? backdropUrl;
-
-  @HiveField(4)
   final String? plot;
-
-  @HiveField(5)
   final int? year;
-
-  @HiveField(6)
   final double? rating;
-
-  @HiveField(7)
   final List<String>? genres;
-
-  @HiveField(8)
   final List<String>? cast;
-
-  @HiveField(9)
   final String? category;
-
-  @HiveField(10)
   final List<SeasonModel>? seasons;
-
-  @HiveField(11)
   final bool isFavorite;
-
-  @HiveField(12)
   final bool isLocked;
-
-  @HiveField(13)
   final String? lastWatchedEpisodeId;
-
-  @HiveField(14)
   final DateTime? lastWatched;
-
-  @HiveField(15)
   final Map<String, dynamic>? metadata;
 
   SeriesModel copyWith({
@@ -195,7 +160,6 @@ class SeriesModel extends Equatable {
 }
 
 /// Represents a season within a series
-@HiveType(typeId: 3)
 class SeasonModel extends Equatable {
   const SeasonModel({
     required this.id,
@@ -205,19 +169,10 @@ class SeasonModel extends Equatable {
     this.episodes,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final int seasonNumber;
-
-  @HiveField(2)
   final String? name;
-
-  @HiveField(3)
   final String? posterUrl;
-
-  @HiveField(4)
   final List<EpisodeModel>? episodes;
 
   SeasonModel copyWith({
@@ -268,7 +223,6 @@ class SeasonModel extends Equatable {
 }
 
 /// Represents an episode within a season
-@HiveType(typeId: 4)
 class EpisodeModel extends Equatable {
   const EpisodeModel({
     required this.id,
@@ -284,37 +238,16 @@ class EpisodeModel extends Equatable {
     this.lastWatched,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final int episodeNumber;
-
-  @HiveField(2)
   final String? title;
-
-  @HiveField(3)
   final String? streamUrl;
-
-  @HiveField(4)
   final String? posterUrl;
-
-  @HiveField(5)
   final String? plot;
-
-  @HiveField(6)
   final int? duration; // in minutes
-
-  @HiveField(7)
   final DateTime? releaseDate;
-
-  @HiveField(8)
   final String? containerExtension;
-
-  @HiveField(9)
   final Duration? watchProgress;
-
-  @HiveField(10)
   final DateTime? lastWatched;
 
   EpisodeModel copyWith({

@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'epg_model.g.dart';
 
 /// Represents an EPG (Electronic Program Guide) entry
-@HiveType(typeId: 5)
 class EpgModel extends Equatable {
   const EpgModel({
     required this.id,
@@ -21,40 +17,17 @@ class EpgModel extends Equatable {
     this.isRepeat,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String channelId;
-
-  @HiveField(2)
   final String title;
-
-  @HiveField(3)
   final DateTime startTime;
-
-  @HiveField(4)
   final DateTime endTime;
-
-  @HiveField(5)
   final String? description;
-
-  @HiveField(6)
   final String? category;
-
-  @HiveField(7)
   final String? iconUrl;
-
-  @HiveField(8)
   final String? rating;
-
-  @HiveField(9)
   final bool? isNew;
-
-  @HiveField(10)
   final bool? isLive;
-
-  @HiveField(11)
   final bool? isRepeat;
 
   EpgModel copyWith({

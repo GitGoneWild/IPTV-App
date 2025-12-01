@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'category_model.g.dart';
 
 /// Represents a content category
-@HiveType(typeId: 9)
 class CategoryModel extends Equatable {
   const CategoryModel({
     required this.id,
@@ -15,22 +11,11 @@ class CategoryModel extends Equatable {
     this.type,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final String? parentId;
-
-  @HiveField(3)
   final String? iconUrl;
-
-  @HiveField(4)
   final int order;
-
-  @HiveField(5)
   final CategoryType? type;
 
   CategoryModel copyWith({
@@ -90,14 +75,8 @@ class CategoryModel extends Equatable {
 }
 
 /// Category type
-@HiveType(typeId: 10)
 enum CategoryType {
-  @HiveField(0)
   live,
-
-  @HiveField(1)
   movie,
-
-  @HiveField(2)
   series,
 }

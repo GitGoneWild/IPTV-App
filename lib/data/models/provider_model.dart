@@ -1,20 +1,12 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'provider_model.g.dart';
 
 /// IPTV provider type
-@HiveType(typeId: 6)
 enum ProviderType {
-  @HiveField(0)
   m3u,
-
-  @HiveField(1)
   xtream,
 }
 
 /// Represents an IPTV provider configuration
-@HiveType(typeId: 7)
 class ProviderModel extends Equatable {
   const ProviderModel({
     required this.id,
@@ -32,43 +24,18 @@ class ProviderModel extends Equatable {
     this.updatedAt,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final ProviderType type;
-
-  @HiveField(3)
   final String? url;
-
-  @HiveField(4)
   final String? username;
-
-  @HiveField(5)
   final String? password;
-
-  @HiveField(6)
   final String? epgUrl;
-
-  @HiveField(7)
   final bool isActive;
-
-  @HiveField(8)
   final DateTime? lastSync;
-
-  @HiveField(9)
   final DateTime? expirationDate;
-
-  @HiveField(10)
   final int? maxConnections;
-
-  @HiveField(11)
   final DateTime? createdAt;
-
-  @HiveField(12)
   final DateTime? updatedAt;
 
   ProviderModel copyWith({

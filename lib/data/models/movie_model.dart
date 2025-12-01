@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'movie_model.g.dart';
 
 /// Represents a VOD movie
-@HiveType(typeId: 1)
 class MovieModel extends Equatable {
   const MovieModel({
     required this.id,
@@ -28,61 +24,24 @@ class MovieModel extends Equatable {
     this.metadata,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String title;
-
-  @HiveField(2)
   final String? streamUrl;
-
-  @HiveField(3)
   final String? posterUrl;
-
-  @HiveField(4)
   final String? backdropUrl;
-
-  @HiveField(5)
   final String? plot;
-
-  @HiveField(6)
   final int? year;
-
-  @HiveField(7)
   final int? duration; // in minutes
-
-  @HiveField(8)
   final double? rating;
-
-  @HiveField(9)
   final List<String>? genres;
-
-  @HiveField(10)
   final String? director;
-
-  @HiveField(11)
   final List<String>? cast;
-
-  @HiveField(12)
   final String? category;
-
-  @HiveField(13)
   final String? containerExtension;
-
-  @HiveField(14)
   final bool isFavorite;
-
-  @HiveField(15)
   final bool isLocked;
-
-  @HiveField(16)
   final Duration? watchProgress;
-
-  @HiveField(17)
   final DateTime? lastWatched;
-
-  @HiveField(18)
   final Map<String, dynamic>? metadata;
 
   MovieModel copyWith({

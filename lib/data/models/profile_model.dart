@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'profile_model.g.dart';
 
 /// Represents a user profile
-@HiveType(typeId: 8)
 class ProfileModel extends Equatable {
   const ProfileModel({
     required this.id,
@@ -20,37 +16,16 @@ class ProfileModel extends Equatable {
     this.lastUsed,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final String? avatarUrl;
-
-  @HiveField(3)
   final bool isKidsProfile;
-
-  @HiveField(4)
   final String? providerId;
-
-  @HiveField(5)
   final String? parentalPin;
-
-  @HiveField(6)
   final List<String>? lockedCategories;
-
-  @HiveField(7)
   final List<String>? lockedChannelIds;
-
-  @HiveField(8)
   final String? maxContentRating;
-
-  @HiveField(9)
   final DateTime? createdAt;
-
-  @HiveField(10)
   final DateTime? lastUsed;
 
   ProfileModel copyWith({

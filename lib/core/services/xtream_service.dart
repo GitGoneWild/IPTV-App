@@ -39,7 +39,7 @@ class XtreamService {
           status: userInfo['status']?.toString() ?? 'Unknown',
           expirationDate: userInfo['exp_date'] != null
               ? DateTime.fromMillisecondsSinceEpoch(
-                  int.tryParse(userInfo['exp_date'].toString()) ?? 0 * 1000,
+                  (int.tryParse(userInfo['exp_date'].toString()) ?? 0) * 1000,
                 )
               : null,
           maxConnections:

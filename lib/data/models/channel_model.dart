@@ -1,10 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:hive/hive.dart';
-
-part 'channel_model.g.dart';
 
 /// Represents a live TV channel
-@HiveType(typeId: 0)
 class ChannelModel extends Equatable {
   const ChannelModel({
     required this.id,
@@ -21,40 +17,17 @@ class ChannelModel extends Equatable {
     this.metadata,
   });
 
-  @HiveField(0)
   final String id;
-
-  @HiveField(1)
   final String name;
-
-  @HiveField(2)
   final String? streamUrl;
-
-  @HiveField(3)
   final String? logoUrl;
-
-  @HiveField(4)
   final String? group;
-
-  @HiveField(5)
   final String? epgId;
-
-  @HiveField(6)
   final int? catchupDays;
-
-  @HiveField(7)
   final bool isFavorite;
-
-  @HiveField(8)
   final bool isLocked;
-
-  @HiveField(9)
   final int order;
-
-  @HiveField(10)
   final DateTime? lastWatched;
-
-  @HiveField(11)
   final Map<String, dynamic>? metadata;
 
   ChannelModel copyWith({
