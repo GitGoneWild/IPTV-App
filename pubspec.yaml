@@ -34,7 +34,7 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_svg: ^2.0.9
   shimmer: ^3.0.0
-  google_fonts: ^6.1.0
+  google_fonts: ^6.3.3
 
   # Utilities
   uuid: ^4.2.2
